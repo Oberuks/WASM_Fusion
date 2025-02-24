@@ -1,0 +1,80 @@
+﻿@page "/counter"
+@rendermode InteractiveWebAssembly
+@using ActualLab.Fusion.Blazor
+@using Abstractions
+@using ActualLab.CommandR
+@using ActualLab.Fusion
+@inherits MixedStateComponent<Counter.Model, Country>
+@inject ICountryService CountryService
+@inject ICommander Commander
+
+@{
+    var locals = MutableState.Value;
+    var state = State.LastNonErrorValue;
+    var lastPage = state.Countries;
+    var error = State.Error;
+}
+
+<PageTitle>Countries</PageTitle>
+
+<h1>Countries</h1>
+
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var country in lastPage.Countries)
+            {
+                <tr>
+                    <td>@country.Id</td>
+                    <td>@country.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<br />
+<div>
+    <button class="btn btn-primary" @onclick="CreateNewCountry">CreateNewCountry</button>
+</div>
+
+@code {
+    public record Model
+    {
+        //public long UserCount { get; init; }
+        //public long ActiveUserCount { get; init; }
+        //public User User { get; init; } = User.NewGuest();
+        public CountryList Countries { get; init; } = new();
+    }
+    
+    private async Task CreateNewCountry()
+    {
+        //var result = await UICommander.Run(new UpdateCountryCommand(MutableState.Value.Id, MutableState.Value));
+        //if (result.HasError)
+        //    return; // The error will be displayed in the UI anyway
+
+        var country = new Country { Name = "Vietnam" };
+        var result = await Commander.Call(new EditCountryCommand(country.Id, country));
+        if (!result)
+            return; // The error will be displayed in the UI anyway
+    
+        MutableState.Invalidate();
+    }
+
+    protected override MutableState<Country>.Options GetMutableStateOptions()
+        => new() { InitialValue = new Country { Name = null! } };
+
+    protected override ComputedState<Model>.Options GetStateOptions()
+        => new() { InitialValue = new() };
+
+    protected override async Task<Model> ComputeState(CancellationToken cancellationToken)
+    {
+        var countryList = await CountryService.ListAsync(30, cancellationToken);
+        return new Model { Countries = countryList };
+    }
+}
