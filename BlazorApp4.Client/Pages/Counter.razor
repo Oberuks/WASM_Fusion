@@ -10,8 +10,9 @@
 
 @{
     var locals = MutableState.Value;
-    var state = State.LastNonErrorValue;
-    var lastPage = state.Countries;
+    var state = State; //for debugging
+    var lastNonErrorValue = state.LastNonErrorValue;
+    var lastPage = lastNonErrorValue.Countries;
     var error = State.Error;
 }
 
@@ -46,18 +47,11 @@
 @code {
     public record Model
     {
-        //public long UserCount { get; init; }
-        //public long ActiveUserCount { get; init; }
-        //public User User { get; init; } = User.NewGuest();
         public CountryList Countries { get; init; } = new();
     }
     
     private async Task CreateNewCountry()
     {
-        //var result = await UICommander.Run(new UpdateCountryCommand(MutableState.Value.Id, MutableState.Value));
-        //if (result.HasError)
-        //    return; // The error will be displayed in the UI anyway
-
         var country = new Country { Name = "Vietnam" };
         var result = await Commander.Call(new EditCountryCommand(country.Id, country));
         if (!result)
